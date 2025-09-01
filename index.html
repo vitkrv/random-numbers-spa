@@ -107,7 +107,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(var(--tile-min), 1fr));
       gap: var(--gap);
-      align-content: start;
+      align-content: center;
       overflow: auto;
     }
     .board[aria-busy="true"] { pointer-events: none; }
@@ -131,6 +131,11 @@
     .tile:active { transform: translateY(0) scale(.985); }
     .tile:focus-visible { box-shadow: var(--shadow), var(--focus); }
     .tile.disabled { opacity: .6; pointer-events: none; }
+
+    .tile.flash {
+      border-color: hsl(145 68% 45%);
+      box-shadow: var(--shadow), 0 0 8px 2px hsl(145 68% 45% / .6);
+    }
 
     .tile .num {
       font-weight: 800;
@@ -360,6 +365,7 @@
       let mode = "randomize"; // 'randomize' | 'edit' | 'delete'
       let editingId = null;   // tile id being edited (null for "Add")
       let animating = new Set(); // ids currently animating
+      let flashTimers = new Map(); // tile.id -> timeout for flash reset
       let theme = localStorage.getItem(LS_THEME) === "light" ? "light" : "dark";
       root.dataset.theme = theme;
       updateThemeButton();
@@ -585,6 +591,12 @@
       if (animating.has(tile.id)) return;
       animating.add(tile.id);
       tileEl.classList.add("disabled");
+      // Clear any pending flash state
+      if (flashTimers.has(tile.id)) {
+        clearTimeout(flashTimers.get(tile.id));
+        flashTimers.delete(tile.id);
+      }
+      tileEl.classList.remove("flash");
 
       const startVal = clampInt(tile.value ?? 1, 1, tile.max);
       const target = randInt(1, tile.max);
@@ -619,15 +631,22 @@
           saveTiles();
           numEl.textContent = String(tile.value);
           numEl.style.transform = "";
-          tileEl.classList.remove("disabled");
-          animating.delete(tile.id);
-          // Update ARIA label/meta
-          metaEl.textContent = `1…${tile.max}`;
-          tileEl.setAttribute("aria-label", `Tile value ${tile.value}, max ${tile.max}. Click to randomize`);
-        }
-      };
-      requestAnimationFrame(step);
-    }
+            tileEl.classList.remove("disabled");
+            animating.delete(tile.id);
+            // Update ARIA label/meta
+            metaEl.textContent = `1…${tile.max}`;
+            tileEl.setAttribute("aria-label", `Tile value ${tile.value}, max ${tile.max}. Click to randomize`);
+            // Flash border/shadow briefly
+            tileEl.classList.add("flash");
+            const to = setTimeout(() => {
+              tileEl.classList.remove("flash");
+              flashTimers.delete(tile.id);
+            }, 2000);
+            flashTimers.set(tile.id, to);
+          }
+        };
+        requestAnimationFrame(step);
+      }
   })();
 </script>
 </body>
