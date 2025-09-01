@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+  />
+  <title>Quick Random Tiles</title>
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg: hsl(220 20% 98%);
+      --fg: hsl(222 25% 12%);
+      --muted: hsl(220 8% 46%);
+      --accent: hsl(252 86% 60%);
+      --accent-pressed: hsl(252 86% 52%);
+      --tile-bg: hsl(0 0% 100%);
+      --tile-border: hsl(0 0% 90%);
+      --shadow: 0 8px 24px rgba(20,20,20,.08), 0 2px 6px rgba(20,20,20,.06);
+      --radius: 18px;
+      --tile-min: clamp(90px, 24vmin, 220px);
+      --bar-h: 64px;
+      --gap: max(10px, 1.5vmin);
+      --focus: 0 0 0 3px color-mix(in oklab, var(--accent) 45%, white);
+      --num-size: clamp(22px, 11vmin, 120px);
+      --label-size: clamp(10px, 1.4vmin, 14px);
+      --base-size: clamp(16px, 2.2vmin + 6px, 18px);
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: radial-gradient(120vmax 120vmax at 100% -10%, #eef 0%, transparent 35%) , var(--bg);
+      color: var(--fg);
+      font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font-size: var(--base-size);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* App layout */
+    .app {
+      min-height: 100svh;
+      padding-bottom: calc(var(--bar-h) + env(safe-area-inset-bottom, 0px));
+      display: grid;
+      grid-template-rows: 1fr auto;
+    }
+
+    /* Instruction/status banner (for Edit/Delete modes) */
+    .banner {
+      position: fixed;
+      top: calc(10px + env(safe-area-inset-top, 0px));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      background: color-mix(in oklab, var(--tile-bg) 92%, var(--accent) 8%);
+      padding: 10px 14px;
+      border-radius: 999px;
+      box-shadow: var(--shadow);
+      font-size: clamp(12px, 1.6vmin, 14px);
+      color: var(--fg);
+      display: none;
+    }
+    .banner.show { display: inline-flex; align-items: center; gap: 10px; }
+    .chip {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      background: var(--accent);
+      color: white;
+      font-size: .9em;
+      letter-spacing: .02em;
+    }
+
+    /* Board */
+    .board {
+      height: calc(100svh - var(--bar-h) - env(safe-area-inset-bottom, 0px));
+      padding: max(10px, 1.2vmin);
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(var(--tile-min), 1fr));
+      gap: var(--gap);
+      align-content: start;
+      overflow: auto;
+    }
+    .board[aria-busy="true"] { pointer-events: none; }
+
+    /* Tile */
+    .tile {
+      position: relative;
+      display: grid;
+      place-items: center;
+      aspect-ratio: 1 / 1;
+      border-radius: var(--radius);
+      background: var(--tile-bg);
+      box-shadow: var(--shadow);
+      user-select: none;
+      cursor: pointer;
+      border: 1px solid var(--tile-border);
+      transition: transform .18s ease, box-shadow .18s ease, border-color .2s ease, background .2s ease;
+      outline: none;
+    }
+    .tile:hover { transform: translateY(-2px); }
+    .tile:active { transform: translateY(0) scale(.985); }
+    .tile:focus-visible { box-shadow: var(--shadow), var(--focus); }
+    .tile.disabled { opacity: .6; pointer-events: none; }
+
+    .tile .num {
+      font-weight: 800;
+      font-variant-numeric: tabular-nums slashed-zero;
+      font-size: var(--num-size);
+      line-height: 1;
+      letter-spacing: .02em;
+    }
+    .tile .meta {
+      position: absolute;
+      bottom: 10px;
+      right: 12px;
+      font-size: var(--label-size);
+      color: var(--muted);
+      pointer-events: none;
+      background: rgba(255,255,255,.6);
+      padding: 2px 8px;
+      border-radius: 999px;
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(0,0,0,.04);
+    }
+    .tile.edit-target { outline: 3px dashed color-mix(in oklab, var(--accent) 50%, #fff); outline-offset: 3px; }
+    .tile.delete-target { outline: 3px dashed hsl(8 80% 55%); outline-offset: 3px; }
+
+    /* Bottom bar */
+    .toolbar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: var(--bar-h);
+      padding: 0 max(8px, 2vmin) env(safe-area-inset-bottom, 0px);
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+      gap: max(8px, 1.6vmin);
+      align-items: center;
+      background:
+              linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.92) 18%, rgba(255,255,255,.98) 100%);
+      backdrop-filter: blur(10px) saturate(1.2);
+      border-top: 1px solid rgba(0,0,0,.06);
+      z-index: 10;
+    }
+    .btn {
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,.08);
+      background: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      color: var(--fg);
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0) scale(.985); }
+    .btn:focus-visible { box-shadow: 0 2px 8px rgba(0,0,0,.06), var(--focus); outline: none; }
+    .btn[aria-pressed="true"]{
+      background: var(--accent);
+      color: white;
+      border-color: transparent;
+    }
+    .btn svg{
+      width: 20px; height: 20px; flex: 0 0 20px;
+    }
+
+    /* Dialog */
+    dialog {
+      border: none;
+      border-radius: 20px;
+      width: min(480px, 92vw);
+      padding: 0;
+      box-shadow: 0 20px 60px rgba(0,0,0,.22);
+      background: var(--tile-bg);
+      color: var(--fg);
+    }
+    dialog::backdrop {
+      background: rgba(10, 12, 16, .45);
+      backdrop-filter: blur(2px);
+    }
+    .modal-head{
+      padding: 18px 22px 0 22px;
+      font-weight: 800; font-size: 1.05rem;
+    }
+    .modal-body{
+      padding: 12px 22px 6px 22px;
+      display: grid;
+      gap: 10px;
+    }
+    .field{
+      display: grid;
+      gap: 6px;
+    }
+    .field label{
+      font-size: .92rem;
+      color: var(--muted);
+    }
+    .field input[type="number"]{
+      height: 42px; border-radius: 12px;
+      border: 1px solid rgba(0,0,0,.12);
+      padding: 0 12px;
+      font: inherit; color: inherit;
+      background: white;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .field input[type="number"]:focus{
+      border-color: color-mix(in oklab, var(--accent) 45%, #999);
+      box-shadow: var(--focus);
+    }
+    .modal-foot{
+      padding: 14px 16px 16px 16px;
+      display: grid; grid-auto-flow: column; gap: 10px;
+      grid-auto-columns: 1fr;
+    }
+    .ghost{
+      background: transparent; border: 1px dashed rgba(0,0,0,.2);
+    }
+    .primary{
+      background: var(--accent); color: white; border-color: transparent;
+    }
+    .primary:active { background: var(--accent-pressed); }
+
+    /* Empty state */
+    .empty {
+      display: grid; place-items: center;
+      color: var(--muted);
+      font-weight: 600;
+      padding: 8vmin 2rem 10vmin;
+      text-align: center;
+      gap: 10px;
+    }
+    .empty svg{ opacity: .5; width: clamp(52px, 16vmin, 140px); height: auto; }
+
+    /* Reduce motion */
+    @media (prefers-reduced-motion: reduce){
+      .tile, .btn { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+  <div id="modeBanner" class="banner" role="status" aria-live="polite"></div>
+
+  <main id="board" class="board" role="grid" aria-label="Randomizer tiles"></main>
+
+  <nav class="toolbar" role="toolbar" aria-label="Actions">
+    <button id="btnAdd" class="btn" type="button" aria-label="Add new tile">
+      <!-- plus icon -->
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 11V4a1 1 0 1 1 2 0v7h7a1 1 0 1 1 0 2h-7v7a1 1 0 1 1-2 0v-7H4a1 1 0 1 1 0-2h7z" fill="currentColor"/></svg>
+      Add
+    </button>
+    <button id="btnEdit" class="btn" type="button" aria-pressed="false" aria-label="Edit tile">
+      <!-- edit/pencil icon -->
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L18.81 8.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" fill="currentColor"/></svg>
+      Edit
+    </button>
+    <button id="btnDelete" class="btn" type="button" aria-pressed="false" aria-label="Delete tile">
+      <!-- trash icon -->
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3a1 1 0 0 0-1 1v1H4a1 1 0 1 0 0 2h1v12a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V7h1a1 1 0 1 0 0-2h-4V4a1 1 0 0 0-1-1H9zm2 2h2v1h-2V5zm-3 4a1 1 0 1 1 2 0v9a1 1 0 1 1-2 0V9zm6 0a1 1 0 1 1 2 0v9a1 1 0 1 1-2 0V9z" fill="currentColor"/></svg>
+      Delete
+    </button>
+  </nav>
+</div>
+
+<!-- One dialog used for Add and Edit -->
+<dialog id="editDialog" aria-labelledby="dlgTitle">
+  <form method="dialog" id="editForm">
+    <div class="modal-head" id="dlgTitle">Tile Options</div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="maxInput">Max random number</label>
+        <input id="maxInput" name="max" type="number" inputmode="numeric" min="1" step="1" placeholder="e.g., 100" required />
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" value="cancel" formmethod="dialog" type="submit">Cancel</button>
+      <button class="btn primary" id="saveBtn" value="default" type="submit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<template id="tileTmpl">
+  <div class="tile" tabindex="0" role="gridcell" aria-roledescription="randomizer tile" aria-label="">
+    <div class="num">—</div>
+    <div class="meta"></div>
+  </div>
+</template>
+
+<template id="emptyTmpl">
+  <div class="empty" role="note" aria-live="polite">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <path fill="currentColor" d="M32 6a26 26 0 1 1 0 52 26 26 0 0 1 0-52zm0 6a20 20 0 1 0 0 40 20 20 0 0 0 0-40zm-7 20a2 2 0 1 1 0-4h14a2 2 0 1 1 0 4H25z"/>
+    </svg>
+    <div>No tiles yet. Tap <b>Add</b> to create your first randomizer.</div>
+  </div>
+</template>
+
+<script>
+  (() => {
+    const LS_KEY = "qr-tiles-v1";
+    const LS_LAST_MAX = "qr-last-max";
+    const board = document.getElementById("board");
+    const banner = document.getElementById("modeBanner");
+    const tmpl = document.getElementById("tileTmpl");
+    const emptyTmpl = document.getElementById("emptyTmpl");
+    const dlg = document.getElementById("editDialog");
+    const form = document.getElementById("editForm");
+    const maxInput = document.getElementById("maxInput");
+    const saveBtn = document.getElementById("saveBtn");
+    const btnAdd = document.getElementById("btnAdd");
+    const btnEdit = document.getElementById("btnEdit");
+    const btnDelete = document.getElementById("btnDelete");
+
+    /** @type {{id:string, max:number, value:number}[]} */
+    let tiles = loadTiles();
+    let mode = "randomize"; // 'randomize' | 'edit' | 'delete'
+    let editingId = null;   // tile id being edited (null for "Add")
+    let animating = new Set(); // ids currently animating
+
+    // ---- Init ----
+    render();
+    updateBanner();
+
+    // ---- Event Wiring ----
+    btnAdd.addEventListener("click", () => {
+      editingId = null;
+      openDialogForAdd();
+    });
+
+    btnEdit.addEventListener("click", () => {
+      toggleMode("edit");
+    });
+
+    btnDelete.addEventListener("click", () => {
+      toggleMode("delete");
+    });
+
+    board.addEventListener("click", onBoardClick);
+    board.addEventListener("keydown", (e) => {
+      const tileEl = e.target.closest?.(".tile");
+      if (!tileEl) return;
+      const key = e.key;
+      if (key === "Enter" || key === " ") {
+        e.preventDefault();
+        handleTileAction(tileEl);
+      }
+    });
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const submitter = /** @type {HTMLButtonElement} */ (e.submitter);
+      if (submitter && submitter.value === "cancel") {
+        dlg.close();
+        return;
+      }
+      const raw = maxInput.value.trim();
+      const n = clampInt(parseInt(raw, 10), 1, 1_000_000_000);
+      if (!Number.isFinite(n) || n < 1) {
+        maxInput.focus();
+        return;
+      }
+      localStorage.setItem(LS_LAST_MAX, String(n));
+      if (editingId === null) {
+        // Add
+        const id = cryptoRandomId();
+        const value = randInt(1, n);
+        tiles.push({ id, max: n, value });
+      } else {
+        // Edit existing
+        const t = tiles.find(t => t.id === editingId);
+        if (t) {
+          t.max = n;
+          if (t.value > n) t.value = n; // clamp current value to new max
+        }
+      }
+      saveTiles();
+      dlg.close();
+      render();
+      // Return to edit mode if we were editing; else stay in randomize
+      // (Requirement: Edit stays active; Add doesn't toggle modes)
+    });
+
+    dlg.addEventListener("close", () => {
+      // keep mode unchanged
+      editingId = null;
+    });
+
+    // ---- Functions ----
+    function toggleMode(next){
+      if (mode === next) {
+        mode = "randomize";
+      } else {
+        mode = next;
+      }
+      btnEdit.setAttribute("aria-pressed", String(mode === "edit"));
+      btnDelete.setAttribute("aria-pressed", String(mode === "delete"));
+      updateBanner();
+      // clear any visual selection outlines
+      board.querySelectorAll(".tile").forEach(el => {
+        el.classList.remove("edit-target", "delete-target");
+      });
+    }
+
+    function updateBanner(){
+      if (mode === "edit") {
+        banner.innerHTML = `<span class="chip">EDIT</span> Tap a tile to change its max number`;
+        banner.classList.add("show");
+      } else if (mode === "delete") {
+        banner.innerHTML = `<span class="chip" style="background:hsl(8 80% 55%)">DELETE</span> Tap a tile to remove it`;
+        banner.classList.add("show");
+      } else {
+        banner.classList.remove("show");
+        banner.textContent = "";
+      }
+    }
+
+    function onBoardClick(e){
+      const tileEl = e.target.closest?.(".tile");
+      if (!tileEl) return;
+      handleTileAction(tileEl);
+    }
+
+    function handleTileAction(tileEl){
+      const id = tileEl.dataset.id;
+      const tile = tiles.find(t => t.id === id);
+      if (!tile) return;
+
+      if (mode === "randomize") {
+        animateRandom(tileEl, tile, 1500);
+      } else if (mode === "edit") {
+        tileEl.classList.add("edit-target");
+        editingId = id;
+        openDialogForEdit(tile);
+      } else if (mode === "delete") {
+        tileEl.classList.add("delete-target");
+        deleteTile(id);
+      }
+    }
+
+    function openDialogForAdd(){
+      document.getElementById("dlgTitle").textContent = "Add Randomizer";
+      const last = parseInt(localStorage.getItem(LS_LAST_MAX) || "100", 10);
+      maxInput.value = Number.isFinite(last) && last > 0 ? String(last) : "100";
+      showDialog();
+    }
+
+    function openDialogForEdit(tile){
+      document.getElementById("dlgTitle").textContent = "Edit Randomizer";
+      maxInput.value = String(tile.max);
+      showDialog();
+    }
+
+    function showDialog(){
+      // Ensure focus moves to input
+      if (typeof dlg.showModal === "function") {
+        dlg.showModal();
+      } else {
+        // Fallback: emulate basic modal
+        dlg.setAttribute("open", "");
+      }
+      // small timeout to ensure dialog is in DOM and then focus
+      setTimeout(() => maxInput.select(), 30);
+    }
+
+    function deleteTile(id){
+      const idx = tiles.findIndex(t => t.id === id);
+      if (idx >= 0) {
+        tiles.splice(idx, 1);
+        saveTiles();
+        render();
+      }
+    }
+
+    function render(){
+      board.innerHTML = "";
+      if (!tiles.length) {
+        board.append(emptyTmpl.content.cloneNode(true));
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      for (const t of tiles) {
+        const el = tmpl.content.firstElementChild.cloneNode(true);
+        el.dataset.id = t.id;
+        el.querySelector(".num").textContent = String(t.value ?? "—");
+        el.querySelector(".meta").textContent = `1…${t.max}`;
+        el.setAttribute("aria-label", `Tile value ${t.value}, max ${t.max}. Click to randomize`);
+        frag.append(el);
+      }
+      board.append(frag);
+    }
+
+    function loadTiles(){
+      try {
+        const raw = localStorage.getItem(LS_KEY);
+        const val = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(val)) return [];
+        return val.filter(t => Number.isFinite(t.max) && t.max >= 1).map(t => ({
+          id: String(t.id || cryptoRandomId()),
+          max: clampInt(parseInt(t.max, 10), 1, 1_000_000_000),
+          value: clampInt(parseInt(t.value, 10), 1, clampInt(parseInt(t.max, 10), 1, 1_000_000_000))
+        }));
+      } catch { return []; }
+    }
+    function saveTiles(){
+      localStorage.setItem(LS_KEY, JSON.stringify(tiles));
+    }
+
+    function randInt(min, max){
+      min = Math.ceil(min); max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    function clampInt(n, min, max){
+      n = Math.trunc(n);
+      if (!Number.isFinite(n)) return min;
+      return Math.min(Math.max(n, min), max);
+    }
+    function cryptoRandomId(){
+      // Short, friendly id
+      const a = crypto.getRandomValues(new Uint32Array(2));
+      return (a[0].toString(36) + a[1].toString(36)).slice(0, 12);
+    }
+
+    // Number animation: tween current -> new random within 1.5s, with easing and subtle scale
+    function animateRandom(tileEl, tile, durationMs = 1500){
+      if (animating.has(tile.id)) return;
+      animating.add(tile.id);
+      tileEl.classList.add("disabled");
+
+      const startVal = clampInt(tile.value ?? 1, 1, tile.max);
+      const target = randInt(1, tile.max);
+      const numEl = tileEl.querySelector(".num");
+      const metaEl = tileEl.querySelector(".meta");
+
+      const start = performance.now();
+      const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+
+      // Kick a small press animation
+      tileEl.style.transition = "transform .18s ease";
+      tileEl.style.transform = "scale(1.03)";
+      setTimeout(() => { tileEl.style.transform = ""; }, 160);
+
+      const step = (now) => {
+        const t = Math.min(1, (now - start) / durationMs);
+        const e = easeOutCubic(t);
+        // Interpolate between start and target
+        const current = Math.round(startVal + (target - startVal) * e);
+        const display = clampInt(current, 1, tile.max);
+        numEl.textContent = String(display);
+
+        // Smoothly animate font weight/scale with CSS var? Keep it simple: slight zoom
+        numEl.style.transform = `scale(${1 + 0.06 * (1 - Math.abs(.5 - e) * 2)})`;
+        numEl.style.transition = "transform .08s linear";
+
+        if (t < 1) {
+          requestAnimationFrame(step);
+        } else {
+          // Finalize value
+          tile.value = target;
+          saveTiles();
+          numEl.textContent = String(tile.value);
+          numEl.style.transform = "";
+          tileEl.classList.remove("disabled");
+          animating.delete(tile.id);
+          // Update ARIA label/meta
+          metaEl.textContent = `1…${tile.max}`;
+          tileEl.setAttribute("aria-label", `Tile value ${tile.value}, max ${tile.max}. Click to randomize`);
+        }
+      };
+      requestAnimationFrame(step);
+    }
+  })();
+</script>
+</body>
+</html>
