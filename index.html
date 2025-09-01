@@ -12,6 +12,31 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
   <style>
     :root{
+      --bg: hsl(222 25% 12%);
+      --fg: hsl(220 20% 96%);
+      --muted: hsl(220 8% 66%);
+      --accent: hsl(252 86% 60%);
+      --accent-pressed: hsl(252 86% 52%);
+      --tile-bg: hsl(222 28% 18%);
+      --tile-border: hsl(0 0% 25%);
+      --shadow: 0 8px 24px rgba(0,0,0,.5), 0 2px 6px rgba(0,0,0,.4);
+      --bg-grad: radial-gradient(120vmax 120vmax at 100% -10%, hsl(222 20% 20%) 0%, transparent 35%);
+      --radius: 18px;
+      --tile-min: clamp(90px, 24vmin, 220px);
+      --bar-h: 64px;
+      --gap: max(10px, 1.5vmin);
+      --focus: 0 0 0 3px color-mix(in oklab, var(--accent) 45%, black);
+      --num-size: clamp(22px, 11vmin, 120px);
+      --label-size: clamp(10px, 1.4vmin, 14px);
+      --base-size: clamp(16px, 2.2vmin + 6px, 18px);
+      --btn-bg: var(--tile-bg);
+      --btn-border: var(--tile-border);
+      --btn-shadow: 0 2px 8px rgba(0,0,0,.5);
+      --bar-bg: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.4) 18%, rgba(0,0,0,.6) 100%);
+      --bar-border: 1px solid rgba(255,255,255,.1);
+    }
+
+    :root[data-theme="light"]{
       --bg: hsl(220 20% 98%);
       --fg: hsl(222 25% 12%);
       --muted: hsl(220 8% 46%);
@@ -20,21 +45,20 @@
       --tile-bg: hsl(0 0% 100%);
       --tile-border: hsl(0 0% 90%);
       --shadow: 0 8px 24px rgba(20,20,20,.08), 0 2px 6px rgba(20,20,20,.06);
-      --radius: 18px;
-      --tile-min: clamp(90px, 24vmin, 220px);
-      --bar-h: 64px;
-      --gap: max(10px, 1.5vmin);
+      --bg-grad: radial-gradient(120vmax 120vmax at 100% -10%, #eef 0%, transparent 35%);
       --focus: 0 0 0 3px color-mix(in oklab, var(--accent) 45%, white);
-      --num-size: clamp(22px, 11vmin, 120px);
-      --label-size: clamp(10px, 1.4vmin, 14px);
-      --base-size: clamp(16px, 2.2vmin + 6px, 18px);
+      --btn-bg: white;
+      --btn-border: rgba(0,0,0,.08);
+      --btn-shadow: 0 2px 8px rgba(0,0,0,.06);
+      --bar-bg: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.92) 18%, rgba(255,255,255,.98) 100%);
+      --bar-border: 1px solid rgba(0,0,0,.06);
     }
 
     * { box-sizing: border-box; }
     html, body {
       height: 100%;
       margin: 0;
-      background: radial-gradient(120vmax 120vmax at 100% -10%, #eef 0%, transparent 35%) , var(--bg);
+      background: var(--bg-grad), var(--bg);
       color: var(--fg);
       font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       font-size: var(--base-size);
@@ -115,19 +139,19 @@
       line-height: 1;
       letter-spacing: .02em;
     }
-    .tile .meta {
-      position: absolute;
-      bottom: 10px;
-      right: 12px;
-      font-size: var(--label-size);
-      color: var(--muted);
-      pointer-events: none;
-      background: rgba(255,255,255,.6);
-      padding: 2px 8px;
-      border-radius: 999px;
-      backdrop-filter: blur(4px);
-      border: 1px solid rgba(0,0,0,.04);
-    }
+      .tile .meta {
+        position: absolute;
+        bottom: 10px;
+        right: 12px;
+        font-size: var(--label-size);
+        color: var(--muted);
+        pointer-events: none;
+        background: color-mix(in oklab, var(--tile-bg) 80%, transparent);
+        padding: 2px 8px;
+        border-radius: 999px;
+        backdrop-filter: blur(4px);
+        border: 1px solid var(--tile-border);
+      }
     .tile.edit-target { outline: 3px dashed color-mix(in oklab, var(--accent) 50%, #fff); outline-offset: 3px; }
     .tile.delete-target { outline: 3px dashed hsl(8 80% 55%); outline-offset: 3px; }
 
@@ -140,21 +164,19 @@
       height: var(--bar-h);
       padding: 0 max(8px, 2vmin) env(safe-area-inset-bottom, 0px);
       display: grid;
-      grid-auto-flow: column;
-      grid-auto-columns: 1fr;
+      grid-template-columns: repeat(3, 1fr) auto;
       gap: max(8px, 1.6vmin);
       align-items: center;
-      background:
-              linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.92) 18%, rgba(255,255,255,.98) 100%);
+      background: var(--bar-bg);
       backdrop-filter: blur(10px) saturate(1.2);
-      border-top: 1px solid rgba(0,0,0,.06);
+      border-top: var(--bar-border);
       z-index: 10;
     }
     .btn {
       height: 44px;
       border-radius: 12px;
-      border: 1px solid rgba(0,0,0,.08);
-      background: white;
+      border: 1px solid var(--btn-border);
+      background: var(--btn-bg);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -162,12 +184,12 @@
       font-weight: 700;
       cursor: pointer;
       transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
-      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      box-shadow: var(--btn-shadow);
       color: var(--fg);
     }
     .btn:hover { transform: translateY(-1px); }
     .btn:active { transform: translateY(0) scale(.985); }
-    .btn:focus-visible { box-shadow: 0 2px 8px rgba(0,0,0,.06), var(--focus); outline: none; }
+      .btn:focus-visible { box-shadow: var(--btn-shadow), var(--focus); outline: none; }
     .btn[aria-pressed="true"]{
       background: var(--accent);
       color: white;
@@ -176,6 +198,8 @@
     .btn svg{
       width: 20px; height: 20px; flex: 0 0 20px;
     }
+
+    .btn.icon-only{ width: 44px; padding: 0; }
 
     /* Dialog */
     dialog {
@@ -208,15 +232,15 @@
       font-size: .92rem;
       color: var(--muted);
     }
-    .field input[type="number"]{
-      height: 42px; border-radius: 12px;
-      border: 1px solid rgba(0,0,0,.12);
-      padding: 0 12px;
-      font: inherit; color: inherit;
-      background: white;
-      outline: none;
-      transition: border-color .15s ease, box-shadow .15s ease;
-    }
+      .field input[type="number"]{
+        height: 42px; border-radius: 12px;
+        border: 1px solid var(--tile-border);
+        padding: 0 12px;
+        font: inherit; color: inherit;
+        background: var(--tile-bg);
+        outline: none;
+        transition: border-color .15s ease, box-shadow .15s ease;
+      }
     .field input[type="number"]:focus{
       border-color: color-mix(in oklab, var(--accent) 45%, #999);
       box-shadow: var(--focus);
@@ -226,9 +250,9 @@
       display: grid; grid-auto-flow: column; gap: 10px;
       grid-auto-columns: 1fr;
     }
-    .ghost{
-      background: transparent; border: 1px dashed rgba(0,0,0,.2);
-    }
+      .ghost{
+        background: transparent; border: 1px dashed var(--tile-border);
+      }
     .primary{
       background: var(--accent); color: white; border-color: transparent;
     }
@@ -257,23 +281,24 @@
 
   <main id="board" class="board" role="grid" aria-label="Randomizer tiles"></main>
 
-  <nav class="toolbar" role="toolbar" aria-label="Actions">
-    <button id="btnAdd" class="btn" type="button" aria-label="Add new tile">
-      <!-- plus icon -->
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 11V4a1 1 0 1 1 2 0v7h7a1 1 0 1 1 0 2h-7v7a1 1 0 1 1-2 0v-7H4a1 1 0 1 1 0-2h7z" fill="currentColor"/></svg>
-      Add
-    </button>
-    <button id="btnEdit" class="btn" type="button" aria-pressed="false" aria-label="Edit tile">
-      <!-- edit/pencil icon -->
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L18.81 8.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" fill="currentColor"/></svg>
-      Edit
-    </button>
-    <button id="btnDelete" class="btn" type="button" aria-pressed="false" aria-label="Delete tile">
-      <!-- trash icon -->
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3a1 1 0 0 0-1 1v1H4a1 1 0 1 0 0 2h1v12a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V7h1a1 1 0 1 0 0-2h-4V4a1 1 0 0 0-1-1H9zm2 2h2v1h-2V5zm-3 4a1 1 0 1 1 2 0v9a1 1 0 1 1-2 0V9zm6 0a1 1 0 1 1 2 0v9a1 1 0 1 1-2 0V9z" fill="currentColor"/></svg>
-      Delete
-    </button>
-  </nav>
+    <nav class="toolbar" role="toolbar" aria-label="Actions">
+      <button id="btnAdd" class="btn" type="button" aria-label="Add new tile">
+        <!-- plus icon -->
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 11V4a1 1 0 1 1 2 0v7h7a1 1 0 1 1 0 2h-7v7a1 1 0 1 1-2 0v-7H4a1 1 0 1 1 0-2h7z" fill="currentColor"/></svg>
+        Add
+      </button>
+      <button id="btnEdit" class="btn" type="button" aria-pressed="false" aria-label="Edit tile">
+        <!-- edit/pencil icon -->
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L18.81 8.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" fill="currentColor"/></svg>
+        Edit
+      </button>
+      <button id="btnDelete" class="btn" type="button" aria-pressed="false" aria-label="Delete tile">
+        <!-- trash icon -->
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3a1 1 0 0 0-1 1v1H4a1 1 0 1 0 0 2h1v12a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V7h1a1 1 0 1 0 0-2h-4V4a1 1 0 0 0-1-1H9zm2 2h2v1h-2V5zm-3 4a1 1 0 1 1 2 0v9a1 1 0 1 1-2 0V9zm6 0a1 1 0 1 1 2 0v9a1 1 0 1 1-2 0V9z" fill="currentColor"/></svg>
+        Delete
+      </button>
+      <button id="btnTheme" class="btn icon-only" type="button" aria-label="Toggle theme"></button>
+    </nav>
 </div>
 
 <!-- One dialog used for Add and Edit -->
@@ -311,25 +336,33 @@
 
 <script>
   (() => {
-    const LS_KEY = "qr-tiles-v1";
-    const LS_LAST_MAX = "qr-last-max";
-    const board = document.getElementById("board");
-    const banner = document.getElementById("modeBanner");
-    const tmpl = document.getElementById("tileTmpl");
-    const emptyTmpl = document.getElementById("emptyTmpl");
-    const dlg = document.getElementById("editDialog");
-    const form = document.getElementById("editForm");
-    const maxInput = document.getElementById("maxInput");
-    const saveBtn = document.getElementById("saveBtn");
-    const btnAdd = document.getElementById("btnAdd");
-    const btnEdit = document.getElementById("btnEdit");
-    const btnDelete = document.getElementById("btnDelete");
+      const LS_KEY = "qr-tiles-v1";
+      const LS_LAST_MAX = "qr-last-max";
+      const LS_THEME = "qr-theme";
+      const board = document.getElementById("board");
+      const banner = document.getElementById("modeBanner");
+      const tmpl = document.getElementById("tileTmpl");
+      const emptyTmpl = document.getElementById("emptyTmpl");
+      const dlg = document.getElementById("editDialog");
+      const form = document.getElementById("editForm");
+      const maxInput = document.getElementById("maxInput");
+      const saveBtn = document.getElementById("saveBtn");
+      const btnAdd = document.getElementById("btnAdd");
+      const btnEdit = document.getElementById("btnEdit");
+      const btnDelete = document.getElementById("btnDelete");
+      const btnTheme = document.getElementById("btnTheme");
+      const root = document.documentElement;
+      const sunSvg = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.25a.75.75 0 01.75.75v1.286a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zm0 17.464a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-.536a.75.75 0 01.75-.75zM4.772 4.772a.75.75 0 011.06 0l.91.91a.75.75 0 01-1.06 1.06l-.91-.91a.75.75 0 010-1.06zm12.488 12.488a.75.75 0 011.06 0l.91.91a.75.75 0 01-1.06 1.06l-.91-.91a.75.75 0 010-1.06zM2.25 12a.75.75 0 01.75-.75h1.286a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75zm17.464 0a.75.75 0 01.75-.75H21a.75.75 0 010 1.5h-.536a.75.75 0 01-.75-.75zM6.742 17.228a.75.75 0 010 1.06l-.91.91a.75.75 0 11-1.06-1.06l.91-.91a.75.75 0 011.06 0zm12.488-10.456a.75.75 0 010 1.06l-.91.91a.75.75 0 11-1.06-1.06l.91-.91a.75.75 0 011.06 0zM12 6.75a5.25 5.25 0 100 10.5 5.25 5.25 0 000-10.5z" fill="currentColor"/></svg>';
+      const moonSvg = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.752 15.002A9.718 9.718 0 0112 21.75a9.75 9.75 0 010-19.5c.716 0 1.41.078 2.078.227a.75.75 0 01.241 1.369 7.5 7.5 0 007.314 12.156.75.75 0 01.12 1.498z" fill="currentColor"/></svg>';
 
     /** @type {{id:string, max:number, value:number}[]} */
-    let tiles = loadTiles();
-    let mode = "randomize"; // 'randomize' | 'edit' | 'delete'
-    let editingId = null;   // tile id being edited (null for "Add")
-    let animating = new Set(); // ids currently animating
+      let tiles = loadTiles();
+      let mode = "randomize"; // 'randomize' | 'edit' | 'delete'
+      let editingId = null;   // tile id being edited (null for "Add")
+      let animating = new Set(); // ids currently animating
+      let theme = localStorage.getItem(LS_THEME) === "light" ? "light" : "dark";
+      root.dataset.theme = theme;
+      updateThemeButton();
 
     // ---- Init ----
     render();
@@ -345,9 +378,16 @@
       toggleMode("edit");
     });
 
-    btnDelete.addEventListener("click", () => {
-      toggleMode("delete");
-    });
+      btnDelete.addEventListener("click", () => {
+        toggleMode("delete");
+      });
+
+      btnTheme.addEventListener("click", () => {
+        theme = theme === "dark" ? "light" : "dark";
+        root.dataset.theme = theme;
+        localStorage.setItem(LS_THEME, theme);
+        updateThemeButton();
+      });
 
     board.addEventListener("click", onBoardClick);
     board.addEventListener("keydown", (e) => {
@@ -399,8 +439,14 @@
       editingId = null;
     });
 
-    // ---- Functions ----
-    function toggleMode(next){
+      // ---- Functions ----
+      function updateThemeButton(){
+        const icon = theme === "dark" ? sunSvg : moonSvg;
+        btnTheme.innerHTML = icon;
+        btnTheme.setAttribute("aria-label", theme === "dark" ? "Switch to light theme" : "Switch to dark theme");
+      }
+
+      function toggleMode(next){
       if (mode === next) {
         mode = "randomize";
       } else {
