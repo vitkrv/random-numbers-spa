@@ -1,7 +1,8 @@
 {
   "name": "Quick Random Tiles",
   "short_name": "Random Tiles",
-  "start_url": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#171c26",
   "theme_color": "#171c26",
