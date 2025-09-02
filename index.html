@@ -143,6 +143,7 @@
       font-size: var(--num-size);
       line-height: 1;
       letter-spacing: .02em;
+      white-space: nowrap;
     }
       .tile .meta {
         position: absolute;
@@ -406,6 +407,10 @@
       }
     });
 
+    window.addEventListener("resize", () => {
+      board.querySelectorAll(".num").forEach(fitNum);
+    });
+
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       const submitter = /** @type {HTMLButtonElement} */ (e.submitter);
@@ -547,12 +552,15 @@
       for (const t of tiles) {
         const el = tmpl.content.firstElementChild.cloneNode(true);
         el.dataset.id = t.id;
-        el.querySelector(".num").textContent = String(t.value ?? "—");
-        el.querySelector(".meta").textContent = `1…${t.max}`;
+        const numEl = el.querySelector(".num");
+        numEl.textContent = formatNum(t.value);
+        const metaEl = el.querySelector(".meta");
+        metaEl.textContent = `1…${formatNum(t.max)}`;
         el.setAttribute("aria-label", `Tile value ${t.value}, max ${t.max}. Click to randomize`);
         frag.append(el);
       }
       board.append(frag);
+      board.querySelectorAll(".num").forEach(fitNum);
     }
 
     function loadTiles(){
@@ -586,6 +594,23 @@
       return (a[0].toString(36) + a[1].toString(36)).slice(0, 12);
     }
 
+    function formatNum(n){
+      if (!Number.isFinite(n)) return "—";
+      return n.toLocaleString('en-US').replace(/,/g, '\u202f');
+    }
+
+    function fitNum(el){
+      const tile = el.closest('.tile');
+      if (!tile) return;
+      el.style.fontSize = '';
+      const max = tile.clientWidth * 0.9;
+      if (el.scrollWidth > max) {
+        const size = parseFloat(getComputedStyle(el).fontSize);
+        const scaled = size * (max / el.scrollWidth);
+        el.style.fontSize = `${scaled}px`;
+      }
+    }
+
     // Number animation: tween current -> new random within 1.5s, with easing and subtle scale
     function animateRandom(tileEl, tile, durationMs = 1500){
       if (animating.has(tile.id)) return;
@@ -617,7 +642,8 @@
         // Interpolate between start and target
         const current = Math.round(startVal + (target - startVal) * e);
         const display = clampInt(current, 1, tile.max);
-        numEl.textContent = String(display);
+        numEl.textContent = formatNum(display);
+        fitNum(numEl);
 
         // Smoothly animate font weight/scale with CSS var? Keep it simple: slight zoom
         numEl.style.transform = `scale(${1 + 0.06 * (1 - Math.abs(.5 - e) * 2)})`;
@@ -629,24 +655,25 @@
           // Finalize value
           tile.value = target;
           saveTiles();
-          numEl.textContent = String(tile.value);
+          numEl.textContent = formatNum(tile.value);
           numEl.style.transform = "";
-            tileEl.classList.remove("disabled");
-            animating.delete(tile.id);
-            // Update ARIA label/meta
-            metaEl.textContent = `1…${tile.max}`;
-            tileEl.setAttribute("aria-label", `Tile value ${tile.value}, max ${tile.max}. Click to randomize`);
-            // Flash border/shadow briefly
-            tileEl.classList.add("flash");
-            const to = setTimeout(() => {
-              tileEl.classList.remove("flash");
-              flashTimers.delete(tile.id);
-            }, 2000);
-            flashTimers.set(tile.id, to);
-          }
-        };
-        requestAnimationFrame(step);
-      }
+          fitNum(numEl);
+          tileEl.classList.remove("disabled");
+          animating.delete(tile.id);
+          // Update ARIA label/meta
+          metaEl.textContent = `1…${formatNum(tile.max)}`;
+          tileEl.setAttribute("aria-label", `Tile value ${tile.value}, max ${tile.max}. Click to randomize`);
+          // Flash border/shadow briefly
+          tileEl.classList.add("flash");
+          const to = setTimeout(() => {
+            tileEl.classList.remove("flash");
+            flashTimers.delete(tile.id);
+          }, 2000);
+          flashTimers.set(tile.id, to);
+        }
+      };
+      requestAnimationFrame(step);
+    }
   })();
 </script>
 </body>
