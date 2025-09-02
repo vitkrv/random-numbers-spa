@@ -21,6 +21,7 @@
       --tile-bg: hsl(222 28% 18%);
       --tile-border: hsl(0 0% 25%);
       --shadow: 0 8px 24px rgba(0,0,0,.5), 0 2px 6px rgba(0,0,0,.4);
+      --tile-shadow-hover: 0 8px 24px white, 0 2px 6px white;
       --bg-grad: radial-gradient(120vmax 120vmax at 100% -10%, hsl(222 20% 20%) 0%, transparent 35%);
       --radius: 18px;
       --tile-min: clamp(90px, 24vmin, 220px);
@@ -46,6 +47,7 @@
       --tile-bg: hsl(0 0% 100%);
       --tile-border: hsl(0 0% 90%);
       --shadow: 0 8px 24px rgba(20,20,20,.08), 0 2px 6px rgba(20,20,20,.06);
+      --tile-shadow-hover: 0 8px 24px lightblue, 0 2px 6px lightblue;
       --bg-grad: radial-gradient(120vmax 120vmax at 100% -10%, #eef 0%, transparent 35%);
       --focus: 0 0 0 3px color-mix(in oklab, var(--accent) 45%, white);
       --btn-bg: white;
@@ -125,11 +127,13 @@
       user-select: none;
       cursor: pointer;
       border: 1px solid var(--tile-border);
-      transition: transform .18s ease, box-shadow .18s ease, border-color .2s ease, background .2s ease;
+      transition: box-shadow .18s ease, border-color .2s ease, background .2s ease;
       outline: none;
     }
-    .tile:hover { transform: translateY(-2px); }
-    .tile:active { transform: translateY(0) scale(.985); }
+    .tile:hover,
+    .tile:active {
+      box-shadow: var(--tile-shadow-hover);
+    }
     .tile:focus-visible { box-shadow: var(--shadow), var(--focus); }
     .tile.disabled { opacity: .6; pointer-events: none; }
 
@@ -632,10 +636,7 @@
       const start = performance.now();
       const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
 
-      // Kick a small press animation
-      tileEl.style.transition = "transform .18s ease";
-      tileEl.style.transform = "scale(1.03)";
-      setTimeout(() => { tileEl.style.transform = ""; }, 160);
+      // Press feedback via CSS shadow; no transform applied
 
       const step = (now) => {
         const t = Math.min(1, (now - start) / durationMs);
