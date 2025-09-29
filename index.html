@@ -11,9 +11,26 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#171c26" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <!-- Google Font -->
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: "Inter";
+      src: local("Inter"), local("Inter-Regular");
+      font-weight: 400;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: "Inter";
+      src: local("Inter Medium"), local("Inter-Medium");
+      font-weight: 600;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: "Inter";
+      src: local("Inter ExtraBold"), local("Inter-ExtraBold");
+      font-weight: 800;
+      font-style: normal;
+    }
+  </style>
   <style>
     :root{
       --bg: hsl(222 25% 12%);
@@ -680,6 +697,15 @@
       requestAnimationFrame(step);
     }
   })();
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('./service-worker.js')
+        .catch((err) => {
+          console.error('Service worker registration failed', err);
+        });
+    });
+  }
 </script>
 </body>
 </html>
