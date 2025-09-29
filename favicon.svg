@@ -1,24 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" fill="#1a202d"/>
-  <rect x="4" y="4" width="4" height="4" fill="#eeeeee"/>
-  <rect x="4" y="8" width="4" height="4" fill="#eeeeee"/>
-  <rect x="4" y="12" width="4" height="4" fill="#eeeeee"/>
-  <rect x="4" y="16" width="4" height="4" fill="#eeeeee"/>
-  <rect x="4" y="20" width="4" height="4" fill="#eeeeee"/>
-  <rect x="12" y="4" width="4" height="4" fill="#eeeeee"/>
-  <rect x="16" y="4" width="4" height="4" fill="#eeeeee"/>
-  <rect x="16" y="8" width="4" height="4" fill="#eeeeee"/>
-  <rect x="12" y="12" width="4" height="4" fill="#eeeeee"/>
-  <rect x="16" y="12" width="4" height="4" fill="#eeeeee"/>
-  <rect x="12" y="16" width="4" height="4" fill="#eeeeee"/>
-  <rect x="12" y="20" width="4" height="4" fill="#eeeeee"/>
-  <rect x="16" y="20" width="4" height="4" fill="#eeeeee"/>
-  <rect x="24" y="4" width="4" height="4" fill="#eeeeee"/>
-  <rect x="28" y="4" width="4" height="4" fill="#eeeeee"/>
-  <rect x="28" y="12" width="4" height="4" fill="#eeeeee"/>
-  <rect x="24" y="12" width="4" height="4" fill="#eeeeee"/>
-  <rect x="28" y="20" width="4" height="4" fill="#eeeeee"/>
-  <rect x="24" y="20" width="4" height="4" fill="#eeeeee"/>
-  <rect x="28" y="8" width="4" height="4" fill="#eeeeee"/>
-  <rect x="28" y="16" width="4" height="4" fill="#eeeeee"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1a202d"/>
+  <g fill="#e2e8f0">
+    <rect x="52" y="52" width="120" height="120" rx="28"/>
+    <rect x="196" y="52" width="120" height="120" rx="28"/>
+    <rect x="340" y="52" width="120" height="120" rx="28"/>
+
+    <rect x="52" y="196" width="120" height="120" rx="28"/>
+    <rect x="196" y="196" width="120" height="120" rx="28"/>
+    <rect x="340" y="196" width="120" height="120" rx="28"/>
+
+    <rect x="52" y="340" width="120" height="120" rx="28"/>
+    <rect x="196" y="340" width="120" height="120" rx="28"/>
+    <rect x="340" y="340" width="120" height="120" rx="28"/>
+  </g>
+  <g fill="#1a202d" font-family="'Inter', 'Segoe UI', sans-serif" font-weight="700" font-size="88"
+     text-anchor="middle" dominant-baseline="middle">
+    <text x="112" y="120">1</text>
+    <text x="256" y="120">2</text>
+    <text x="400" y="120">3</text>
+
+    <text x="112" y="262">4</text>
+    <text x="256" y="262">5</text>
+    <text x="400" y="262">6</text>
+
+    <text x="112" y="408">7</text>
+    <text x="256" y="408">8</text>
+    <text x="400" y="408">9</text>
+  </g>
 </svg>
